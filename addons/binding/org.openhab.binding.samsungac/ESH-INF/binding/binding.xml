@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<binding:binding id="samsungac" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:binding="http://eclipse.org/smarthome/schemas/binding/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/binding/v1.0.0 http://eclipse.org/smarthome/schemas/binding-1.0.0.xsd">
+
+	<name>SamsungAC Binding</name>
+	<description>This is the binding for Samsung Air Conditioner.</description>
+	<author>Rastislav Krist</author>
+
+</binding:binding>

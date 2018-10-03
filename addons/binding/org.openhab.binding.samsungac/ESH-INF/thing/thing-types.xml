@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="samsungac"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Sample Thing Type -->
+	<thing-type id="air_conditioner">
+		<label>Air Conditioner</label>
+		<description>Samsung Air Conditioner</description>
+
+		<channels>
+			<channel id="AC_FUN_TEMPNOW" typeId="temperature" />
+		</channels>
+
+		<config-description>
+			<parameter name="host" type="text" required="true">
+				<label>Air Conditioner Host</label>
+				<description>Air Conditioner Hostname or IP address.</description>
+			</parameter>
+            <parameter name="mac" type="text" required="true">
+                <label>Air Conditioner MAC address</label>
+                <description>Air Conditioner MAC address (like F8042E226844).</description>
+            </parameter>
+            <parameter name="certificate" type="text" required="false">
+                <label>Samsung SSL certificate path</label>
+                <description>Full path (on remote system) to samsung SSL certificate (newer models).</description>
+            </parameter>
+            <parameter name="token" type="text" required="false">
+                <label>Authentication token</label>
+                <description>Authentication token (leave empty for authentication mode).</description>
+            </parameter>
+		</config-description>
+	</thing-type>
+
+    <channel-type id="temperature">
+        <item-type>Number:Temperature</item-type>
+        <label>Temperature</label>
+        <description>Current temperature</description>
+        <category>Temperature</category>
+        <state readOnly="true" pattern="%.1f %unit%" />
+    </channel-type>
+</thing:thing-descriptions>
