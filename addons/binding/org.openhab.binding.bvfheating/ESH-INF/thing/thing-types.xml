@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="bvfheating"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Sample Thing Type -->
+	<thing-type id="zonebox">
+		<label>BvfHeating ZoneBox</label>
+		<description>Sample thing for BvfHeating Binding</description>
+
+		<channels>
+			<channel id="channel1" typeId="sample-channel" />
+		</channels>
+
+		<config-description>
+			<parameter name="url" type="text" required="true">
+				<label>ZoneBox URL</label>
+				<description>URL of BVF ZoneBox user interface</description>
+			</parameter>
+		</config-description>
+
+	</thing-type>
+
+	<!-- Sample Channel Type -->
+	<channel-type id="sample-channel">
+		<item-type>bvfheatingItem</item-type>
+		<label>BvfHeating Binding Channel</label>
+		<description>Sample channel for BvfHeating Binding</description>
+	</channel-type>
+
+</thing:thing-descriptions>

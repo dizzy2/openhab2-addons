@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width; initial-scale=1; minimum-scale=1.0; maximum-scale=2.0"/>
+	<meta name="MobileOptimized" content="width">
+	<meta name="HandheldFriendly" content="true">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta http-equiv="cleartype" content="on">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+<title>BVF Heating Solutions</title>
+<link rel="stylesheet" type="text/css" href="s.css" media="all" />
+<script language="JavaScript" type="text/JavaScript">
+
+function setCookie(name,value)
+{
+	var Days = 30;
+	var exp = new Date();
+	exp.setTime(exp.getTime() + Days*24*60*60*1000);
+	document.cookie = name + "="+ escape (value) + ";expires=" + exp.toGMTString();
+}
+
+function getCookie(name)
+{
+	var arr = document.cookie.match(new RegExp("(^| )"+name+"=([^;]*)(;|$)"));
+	if(arr != null) return unescape(arr[2]); return null;
+}
+
+function delCookie(name)
+{
+	var exp = new Date();
+	exp.setTime(exp.getTime() - 1);
+	var cval=getCookie(name);
+	if(cval!=null) document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+}
+
+</script>
+</head>
+<script language="JavaScript">
+	setCookie("uLang", 1);
+</script>
+<body>
+<div id="page">
+
+<div style="padding:0 0 5px 0px"> <img src="logo.gif" height="26" /> </div>
+<div id="title"> <img src="logo.jpg" height="16" /></div>
+	<form name="update_r" method="POST" style="display:inline">
+<hr>
+<div>
+<input type="hidden" name="room" value="6">
+<input type="button" id="room0" value="ROOM1" onclick="update_r.room.value = 0; update_r.submit();"  />
+<input type="button" id="room1" value="ROOM2" onclick="update_r.room.value = 1; update_r.submit();"  />
+<input type="button" id="room2" value="ROOM3" onclick="update_r.room.value = 2; update_r.submit();"  />
+<input type="button" id="room3" value="ROOM4" onclick="update_r.room.value = 3; update_r.submit();"  />
+<br />
+<input type="button" id="room4" value="ROOM5" onclick="update_r.room.value = 4; update_r.submit();"  />
+<input type="button" id="room5" value="ROOM6" onclick="update_r.room.value = 5; update_r.submit();"  />
+<input type="button" id="room6" value="ROOM7" onclick="update_r.room.value = 6; update_r.submit();" disabled />
+<input type="button" id="room7" value="ROOM8" onclick="update_r.room.value = 7; update_r.submit();"  />
+<br />
+<input type="button" id="AllRoom" value="All Rooms" onclick="update_r.room.value = 'A'; update_r.submit();" />
+</div>
+	</form>
+<form name="update_v0" method="POST" style="display:inline">
+<hr>
+<div id="cur_room" style="display:none"> <label>Current: Room7 </label></div>
+<div id="all_room" style="display:none"> <label>Current: All Rooms </label></div>
+<div id="cur_temp" style="display:none"> <label>Room Temp.: </label> 23.0 ℃ <input type="button" id="curtemp" name="curtemp" value="Refresh" onclick="javascript:location.reload();"/>
+</div>
+<hr>
+<div><label>Setpoint: </label> <input type="text" name="settemp" size="3"/> ℃
+<input type="button" name="add" value="+"  onclick="javascript:stemp += 0.5; update_v0.settemp.value = stemp; update_v0.submit();"/>
+<input type="button" name="sub" value="-"  onclick="javascript:stemp -= 0.5; update_v0.settemp.value = stemp; update_v0.submit();" />
+<input type="button" name="save" value="OK" onclick="update_v0.submit();"/>
+</div>
+</form>
+<form name="update_v1" method="POST" style="display:inline">
+<hr>
+<div><label>Mode:</label><br />
+<input type="radio" name="cmode" value="0" onclick="javascript:update_v1.submit();"  checked /> Comfort <br />
+<input type="radio" name="cmode" value="1" onclick="javascript:update_v1.submit();"   /> Economy <br />
+<input type="radio" name="cmode" value="4" onclick="javascript:update_v1.submit();"   /> Auto
+</div>
+<hr>
+<div><label>On/off </label><br />
+<input type="radio" name="onoff" value="0" onclick="javascript:update_v1.submit();"   /> Off <br />
+<input type="radio" name="onoff" value="1" onclick="javascript:update_v1.submit();"  checked /> On <br />
+</div>
+<hr>
+<div><label>|<a href="eindex.htm" >English</a>| |<a href="dindex.htm" >Nederlands</a>| |<a href="findex.htm" >français</a>| |<a href="gindex.htm" >Deutsch </a>| |<a href="cindex.htm" >中文</a> <br>
+|<a href="ev.htm">|Configuration|</a> </label></div>
+</form>
+<div id="footer"> <br > </div>
+<noscript>Not Support JavaScript！</noscript>
+</div>
+
+    <script language="javascript">
+	var stemp;
+
+	stemp = 23.0;
+	update_v0.settemp.value = stemp;
+	if (update_r.room.value != 255) {
+		document.getElementById('cur_room').style.display = "block";
+		document.getElementById('cur_temp').style.display = "block";
+	}
+	else {
+		document.getElementById('all_room').style.display = "block";
+	}
+	</script>
+
+
+</body>
+</html>

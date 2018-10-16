@@ -28,6 +28,7 @@
     <module>org.openhab.binding.avmfritz.test</module>
     <module>org.openhab.binding.bigassfan</module>
     <module>org.openhab.binding.boschindego</module>
+    <module>org.openhab.binding.bvfheating</module>
     <module>org.openhab.binding.chromecast</module>
     <module>org.openhab.binding.cm11a</module>
     <module>org.openhab.binding.coolmasternet</module>
