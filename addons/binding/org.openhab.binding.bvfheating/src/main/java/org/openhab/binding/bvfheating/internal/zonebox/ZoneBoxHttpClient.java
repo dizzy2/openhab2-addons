@@ -202,4 +202,17 @@ public class ZoneBoxHttpClient {
         params.put("room", Integer.toString(newRoomNr));
         handleResponse(postRequest(params), responseHandler);
     }
+
+    public void v0Form(@NonNull DecimalType setpointTemp, @NonNull ResponseHandler responseHandler) {
+        final Fields params = new Fields(true);
+        params.put("settemp", setpointTemp.toString());
+        handleResponse(postRequest(params), responseHandler);
+    }
+
+    public void v1form(int cMode, boolean isOn, @NonNull ResponseHandler responseHandler) {
+        final Fields params = new Fields(true);
+        params.put("cmode", Integer.toString(cMode));
+        params.put("onoff", isOn ? "1" : "0");
+        handleResponse(postRequest(params), responseHandler);
+    }
 }
