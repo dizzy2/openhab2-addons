@@ -3,13 +3,11 @@
  */
 package org.openhab.binding.bvfheating.internal.zonebox;
 
-import static org.junit.Assert.fail;
-
 import java.util.Optional;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.core.library.types.DecimalType;
-import org.openhab.binding.bvfheating.internal.zonebox.ZoneBoxHttpClient.ResponseHandler;
+import org.openhab.binding.bvfheating.internal.zonebox.ZoneBoxClient.ResponseHandler;
 
 public class CollectingResponseHandler implements ResponseHandler {
     public Integer roomNr = null;
@@ -17,6 +15,8 @@ public class CollectingResponseHandler implements ResponseHandler {
     public DecimalType spTemperature = null;
     public Integer cMode = null;
     public Boolean isOn = null;
+
+    public String error = null;
 
     /*
      * (non-Javadoc)
@@ -72,23 +72,23 @@ public class CollectingResponseHandler implements ResponseHandler {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.openhab.binding.bvfheating.internal.zonebox.ZoneBoxHttpClient.ResponseHandler#handleHttpError(int,
      * java.lang.String)
      */
     @Override
     public void handleHttpError(int status, @NonNull String response) {
-        fail("got an http error: " + status + " -> " + response);
+        this.error = response;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.openhab.binding.bvfheating.internal.zonebox.ZoneBoxHttpClient.ResponseHandler#handleThrowable(java.lang.
      * Throwable)
      */
     @Override
     public void handleThrowable(@NonNull Throwable exc) {
-        fail("got an exception: " + exc.getMessage());
+        this.error = exc.getMessage();
     }
 }

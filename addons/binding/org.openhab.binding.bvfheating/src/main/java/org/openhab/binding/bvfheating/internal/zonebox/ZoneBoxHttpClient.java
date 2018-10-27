@@ -33,22 +33,7 @@ import org.slf4j.LoggerFactory;
  * @author rastiiik
  *
  */
-public class ZoneBoxHttpClient {
-    public static interface ResponseHandler {
-
-        public void handleActualTemp(@NonNull Optional<Integer> roomNr, @NonNull DecimalType temp);
-
-        public void handleSetPointTemp(@NonNull Optional<Integer> roomNr, @NonNull DecimalType temp);
-
-        public void handleCMode(@NonNull Optional<Integer> roomNr, int cMode);
-
-        public void handleOnOff(@NonNull Optional<Integer> roomNr, boolean isOn);
-
-        public void handleHttpError(int status, @NonNull String response);
-
-        public void handleThrowable(@NonNull Throwable exc);
-    }
-
+public class ZoneBoxHttpClient implements ZoneBoxClient {
     private final Logger logger = LoggerFactory.getLogger(ZoneBoxHttpClient.class);
 
     // for example " 23.0 ℃"

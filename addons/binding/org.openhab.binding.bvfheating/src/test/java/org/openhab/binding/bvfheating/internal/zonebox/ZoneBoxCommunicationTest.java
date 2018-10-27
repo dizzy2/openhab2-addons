@@ -3,7 +3,7 @@
  */
 package org.openhab.binding.bvfheating.internal.zonebox;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 
 import org.eclipse.jetty.client.HttpClient;
@@ -25,7 +25,7 @@ public class ZoneBoxCommunicationTest {
     private int roomNr = 0;
 
     private HttpClient httpClient;
-    private ZoneBoxHttpClient zoneBoxClient;
+    private ZoneBoxClient zoneBoxClient;
 
     private static CollectingResponseHandler initialParameters = null;
 
@@ -42,7 +42,7 @@ public class ZoneBoxCommunicationTest {
         httpClient = new HttpClient();
         httpClient.start();
 
-        zoneBoxClient = new ZoneBoxHttpClient(httpClient, hostUrl);
+        zoneBoxClient = new ThresholdZoneBoxClient(new ZoneBoxHttpClient(httpClient, hostUrl), 2000);
     }
 
     @Test
@@ -50,8 +50,12 @@ public class ZoneBoxCommunicationTest {
         initialParameters = new CollectingResponseHandler();
 
         zoneBoxClient.rForm(roomNr, initialParameters);
-        Thread.sleep(2000);
 
+        if (initialParameters.error != null) {
+            String err = initialParameters.error;
+            ZoneBoxCommunicationTest.initialParameters = null;
+            fail("request finished with error: " + err);
+        }
         assertEquals("invalid room numner", Integer.valueOf(roomNr), initialParameters.roomNr);
     }
 
@@ -63,10 +67,9 @@ public class ZoneBoxCommunicationTest {
         assumeNotNull("missing initial parameters from switchRoomNr test", initialParameters);
 
         try {
-            Thread.sleep(2000);
             zoneBoxClient.v0Form(newSetpointTemp, resultHandler);
-            Thread.sleep(2000);
 
+            assertNull("request finished with error", resultHandler.error);
             assertEquals("temperature doesn't match", newSetpointTemp, resultHandler.spTemperature);
         } finally {
             zoneBoxClient.v0Form(initialParameters.spTemperature, resultHandler);
@@ -82,10 +85,9 @@ public class ZoneBoxCommunicationTest {
         assumeNotNull("missing initial parameters from switchRoomNr test", initialParameters);
 
         try {
-            Thread.sleep(2000);
             zoneBoxClient.v1form(newCMode, newIsOn, resultHandler);
-            Thread.sleep(2000);
 
+            assertNull("request finished with error", resultHandler.error);
             assertEquals("cmode doesn't match", Integer.valueOf(newCMode), resultHandler.cMode);
             assertEquals("on/off doesn't match", Boolean.valueOf(newIsOn), resultHandler.isOn);
         } finally {
