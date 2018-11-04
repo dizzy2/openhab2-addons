@@ -19,9 +19,8 @@ import org.eclipse.smarthome.core.library.types.DecimalType;
  */
 public interface ZoneBoxClient {
     /**
-     *
-     * @author rastiiik
-     *
+     * Interface which will receive thermostat values as parsed from ZoneBox response. The order of the methods
+     * invocation is undefined and can change.
      */
     public static interface ResponseHandler {
 

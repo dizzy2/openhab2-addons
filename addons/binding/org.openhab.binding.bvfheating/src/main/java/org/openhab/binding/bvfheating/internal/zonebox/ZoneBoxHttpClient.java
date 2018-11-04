@@ -117,8 +117,10 @@ public class ZoneBoxHttpClient implements ZoneBoxClient {
             }
             if (spMatcher.find()) {
                 logger.debug("parseResponse: found script containing SP value");
-                parseDecimal(spMatcher.group(1))
-                        .ifPresent(spTemp -> responseHandler.handleSetPointTemp(roomNr, spTemp));
+                parseDecimal(spMatcher.group(1)).ifPresent(spTemp -> {
+                    responseHandler.handleSetPointTemp(roomNr, spTemp);
+                    logger.debug("parseResponse: SP value found is: {}", spTemp);
+                });
             } else {
                 logger.trace("parseResponse: script element doesn't seem to contain SP value");
             }
@@ -182,18 +184,21 @@ public class ZoneBoxHttpClient implements ZoneBoxClient {
         }
     }
 
+    @Override
     public void rForm(int newRoomNr, @NonNull ResponseHandler responseHandler) {
         final Fields params = new Fields(true);
         params.put("room", Integer.toString(newRoomNr));
         handleResponse(postRequest(params), responseHandler);
     }
 
+    @Override
     public void v0Form(@NonNull DecimalType setpointTemp, @NonNull ResponseHandler responseHandler) {
         final Fields params = new Fields(true);
-        params.put("settemp", setpointTemp.toString());
+        params.put("settemp", setpointTemp.format("%.1f"));
         handleResponse(postRequest(params), responseHandler);
     }
 
+    @Override
     public void v1form(int cMode, boolean isOn, @NonNull ResponseHandler responseHandler) {
         final Fields params = new Fields(true);
         params.put("cmode", Integer.toString(cMode));

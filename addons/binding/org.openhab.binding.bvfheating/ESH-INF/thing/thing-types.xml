@@ -9,24 +9,106 @@
 		<label>BvfHeating ZoneBox</label>
 		<description>Sample thing for BvfHeating Binding</description>
 
-		<channels>
-			<channel id="channel1" typeId="sample-channel" />
-		</channels>
+        <channel-groups>
+            <channel-group id="room1" typeId="room">
+                <label>Room 1 Control</label>
+                <description>Thermostat control for room 1</description>
+            </channel-group>
+            <channel-group id="room2" typeId="room">
+                <label>Room 2 Control</label>
+                <description>Thermostat control for room 2</description>
+            </channel-group>
+            <channel-group id="room3" typeId="room">
+                <label>Room 3 Control</label>
+                <description>Thermostat control for room 3</description>
+            </channel-group>
+            <channel-group id="room4" typeId="room">
+                <label>Room 4 Control</label>
+                <description>Thermostat control for room 4</description>
+            </channel-group>
+            <channel-group id="room5" typeId="room">
+                <label>Room 5 Control</label>
+                <description>Thermostat control for room 5</description>
+            </channel-group>
+            <channel-group id="room6" typeId="room">
+                <label>Room 6 Control</label>
+                <description>Thermostat control for room 6</description>
+            </channel-group>
+            <channel-group id="room7" typeId="room">
+                <label>Room 7 Control</label>
+                <description>Thermostat control for room 7</description>
+            </channel-group>
+            <channel-group id="room8" typeId="room">
+                <label>Room 8 Control</label>
+                <description>Thermostat control for room 8</description>
+            </channel-group>
+        </channel-groups>
 
 		<config-description>
 			<parameter name="url" type="text" required="true">
 				<label>ZoneBox URL</label>
-				<description>URL of BVF ZoneBox user interface</description>
+				<description>URL of BVF ZoneBox user interface (should end with eindex.htm)</description>
+				<required>true</required>
+			</parameter>
+
+			<parameter name="activeRooms" type="text">
+				<label>Active rooms</label>
+				<description>Active room numbers with paired thermostats (comma separated - like 1,2,3)</description>
+				<default>1,2,3,4,5,6,7,8</default>
+			</parameter>
+
+			<parameter name="httpPollingInterval" type="integer">
+				<label>Polling Interval</label>
+				<description>Refresh interval of the HTTP API (room to room) in seconds (minimal 5)</description>
+				<default>10</default>
+				<advanced>true</advanced>
 			</parameter>
 		</config-description>
-
 	</thing-type>
 
-	<!-- Sample Channel Type -->
-	<channel-type id="sample-channel">
-		<item-type>bvfheatingItem</item-type>
-		<label>BvfHeating Binding Channel</label>
-		<description>Sample channel for BvfHeating Binding</description>
-	</channel-type>
+    <channel-group-type id="room">
+        <label>Room Control</label>
+        <description>Thermostat control for room</description>
+        <channels>
+            <channel id="on_off"  typeId="on_off"/>
+            <channel id="temp"    typeId="temperature" />
+            <channel id="sp_temp" typeId="sp_temperature" />
+            <channel id="mode"    typeId="mode"/>
+        </channels>
+    </channel-group-type>
 
+    <channel-type id="on_off">
+        <item-type>Switch</item-type>
+        <label>On/Off</label>
+        <description>Switch the thermostat on or off</description>
+    </channel-type>
+
+	<channel-type id="temperature">
+	        <item-type>Number</item-type>
+	        <label>Temperature</label>
+	        <description>Current temperature</description>
+	        <category>Temperature</category>
+	        <state readOnly="true" pattern="%.1f °C"/>
+	</channel-type>	
+	
+	<channel-type id="sp_temperature">
+	        <item-type>Number</item-type>
+	        <label>Setpoint Temperature</label>
+	        <description>Setpoint temperature</description>
+            <category>Temperature</category>
+	        <state readOnly="false" pattern="%.1f °C" min="5" max="29" step="0.5"/>
+	</channel-type>
+	
+    <channel-type id="mode">
+        <item-type>Number</item-type>
+        <label>Mode</label>
+        <description>Select thermostat operational mode</description>
+        <state>
+            <options>
+                <option value="0">Comfort</option>
+                <option value="1">Economy</option>
+                <option value="4">Auto</option>
+            </options>
+        </state>
+    </channel-type>
 </thing:thing-descriptions>

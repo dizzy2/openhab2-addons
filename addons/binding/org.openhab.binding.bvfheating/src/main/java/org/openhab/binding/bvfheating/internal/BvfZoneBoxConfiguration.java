@@ -23,4 +23,8 @@ public class BvfZoneBoxConfiguration {
      * Sample configuration parameter. Replace with your own.
      */
     public String url;
+
+    public String activeRooms;
+
+    public Integer httpPollingInterval;
 }

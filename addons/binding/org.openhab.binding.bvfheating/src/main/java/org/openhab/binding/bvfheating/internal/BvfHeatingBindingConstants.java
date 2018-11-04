@@ -12,6 +12,10 @@
  */
 package org.openhab.binding.bvfheating.internal;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 
@@ -29,6 +33,26 @@ public class BvfHeatingBindingConstants {
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_ZONEBOX = new ThingTypeUID(BINDING_ID, "zonebox");
 
+    // configuration parameters
+    public static final String CONFIG_URL = "url";
+    public static final String CONFIG_ACTIVE_ROOMS = "activeRooms";
+    public static final String CONFIG_HTTP_POLLING_INTERVAL = "httpPollingInterval";
+
+    // all channel groups (rooms)
+    public static final String[] CHANNEL_GROUPS_ROOMS = { "room1", "room2", "room3", "room4", "room5", "room6", "room7", "room8" };
+    public static final Map<String, Integer> CHANNEL_GROUP2INDEX;
+
+    static {
+	HashMap<String, Integer> room2index = new HashMap<>(CHANNEL_GROUPS_ROOMS.length);
+	for(int i = 0; i < CHANNEL_GROUPS_ROOMS.length; i++) {
+	    room2index.put(CHANNEL_GROUPS_ROOMS[i], i);
+	}
+	CHANNEL_GROUP2INDEX = Collections.unmodifiableMap(room2index);
+    }
+
     // List of all Channel ids
-    public static final String CHANNEL_1 = "channel1";
+    public static final String CHANNEL_ONOFF = "on_off";
+    public static final String CHANNEL_TEMP = "temp";
+    public static final String CHANNEL_SP_TEMP = "sp_temp";
+    public static final String CHANNEL_MODE = "mode";
 }

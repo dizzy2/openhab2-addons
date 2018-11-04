@@ -12,23 +12,27 @@
  */
 package org.openhab.binding.bvfheating.internal;
 
-import static org.openhab.binding.bvfheating.internal.BvfHeatingBindingConstants.CHANNEL_1;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
-import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.bvfheating.internal.zonebox.ThresholdZoneBoxClient;
+import org.openhab.binding.bvfheating.internal.zonebox.ZoneBoxClient;
+import org.openhab.binding.bvfheating.internal.zonebox.ZoneBoxHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,80 +49,162 @@ public class BvfZoneBoxHandler extends BaseThingHandler {
 
     private final HttpClient httpClient;
 
-    @Nullable
-    private BvfZoneBoxConfiguration config;
+    private Optional<ZoneBoxClient> zoneBoxClient;
+    private Optional<ScheduledFuture<?>> pollingTickFuture;
+    private boolean isOnline = false;
 
-    public BvfZoneBoxHandler(Thing thing, @NonNull HttpClient httpClient) {
+    private class PollingTick implements Runnable {
+        private final Iterable<Integer> rooms;
+        private Iterator<Integer> roomIter;
+
+        /**
+         *
+         */
+        public PollingTick(Iterable<Integer> rooms) {
+            this.rooms = rooms;
+            this.roomIter = rooms.iterator();
+        }
+
+        @Override
+        public void run() {
+            RoomStatus roomStatus = new RoomStatus();
+            if (!roomIter.hasNext()) {
+                roomIter = rooms.iterator();
+            }
+            final int roomNr = roomIter.next() - 1;
+            zoneBoxClientTransaction(zoneBoxClient ->
+            	zoneBoxClient.rForm(roomNr, roomStatus.zoneboxResponseHandler), "polling tick, room ", roomNr);
+
+            isOnline = roomStatus.error.map(err -> {
+            	updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, err.toString());
+            	return false;
+            }).orElseGet(() -> {
+                roomStatus.apply2handler(thing.getUID(), (channelID, state) -> updateState(channelID, state));
+                if (!isOnline) {
+                    updateStatus(ThingStatus.ONLINE, ThingStatusDetail.NONE, "");
+        		}
+            	return true;
+            });
+        }
+    }
+
+    public BvfZoneBoxHandler(Thing thing, HttpClient httpClient) {
         super(thing);
         this.httpClient = httpClient;
+        this.zoneBoxClient = Optional.empty();
+        this.pollingTickFuture = Optional.empty();
     }
+
+    private boolean zoneBoxClientTransaction(Consumer<ZoneBoxClient> transaction, String transactionName, Object prm) {
+        return zoneBoxClient.map(zoneBoxClient -> {
+            synchronized (zoneBoxClient) {
+                logger.debug("{}: ZoneBoxClient transaction start: {} {}", this, transactionName, prm);
+                transaction.accept(zoneBoxClient);
+            }
+            logger.debug("{}: ZoneBoxClient transaction finished: {} {}", this, transactionName, prm);
+            return true;
+        }).orElseGet(() -> {
+            logger.error("{}: Illegal state - ZoneBoxClient is not initialized yet");
+            return false;
+        });
+    }
+
+
+    private static Optional<Integer> atoi(String number) {
+        try {
+            return Optional.of(Integer.parseInt(number));
+        } catch (NumberFormatException exc) {
+            return Optional.empty();
+        }
+    }
+
 
     @Override
     public void initialize() {
-        // logger.debug("Start initializing!");
-        config = getConfigAs(BvfZoneBoxConfiguration.class);
-
-        // TODO: Initialize the handler.
-        // The framework requires you to return from this method quickly. Also, before leaving this method a thing
-        // status from one of ONLINE, OFFLINE or UNKNOWN must be set. This might already be the real thing status in
-        // case you can decide it directly.
-        // In case you can not decide the thing status directly (e.g. for long running connection handshake using WAN
-        // access or similar) you should set status UNKNOWN here and then decide the real status asynchronously in the
-        // background.
-
-        // set the thing status to UNKNOWN temporarily and let the background task decide for the real status.
-        // the framework is then able to reuse the resources from the thing handler initialization.
-        // we set this upfront to reliably check status updates in unit tests.
         updateStatus(ThingStatus.UNKNOWN);
+        this.isOnline = false;
 
-        try {
-            httpClient.newRequest(config.url).method(HttpMethod.GET).followRedirects(true).onRequestBegin(rq -> {
-                rq.getURI();
-            }).onResponseSuccess(resp -> {
-                updateStatus(ThingStatus.ONLINE, ThingStatusDetail.NONE,
-                        "found BVF ZoneBox on: " + resp.getRequest().getURI());
-            }).onRequestFailure((resp, exc) -> {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "error: " + exc.getMessage());
-            }).onResponseFailure((resp, exc) -> {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "error: " + exc.getMessage());
-            }).send();
-        } catch (InterruptedException | TimeoutException | ExecutionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        logger.debug("{}: dropping previous tick handler (if any)", this);
+    	pollingTickFuture.ifPresent(pollingTick -> {
+    	    if(!pollingTick.isDone()) {
+    	        pollingTick.cancel(false);
+    	    }
+    	});
+    	pollingTickFuture = Optional.empty();
+
+    	logger.debug("{}: parsing configuration settings: {}", getConfig());
+        Set<Integer> activeRooms = Optional.ofNullable(getConfig().get(BvfHeatingBindingConstants.CONFIG_ACTIVE_ROOMS)).map(activeRoomsObj -> {
+            return Arrays.stream(activeRoomsObj.toString().split(","))
+                .map(roomStr -> atoi(roomStr.trim()).orElse(-1))
+                .collect(Collectors.toSet());
+        }).orElse(Collections.emptySet());
+
+        String url = getConfig().get(BvfHeatingBindingConstants.CONFIG_URL).toString();
+
+        int httpPollingInterval = Optional.ofNullable(getConfig().get(BvfHeatingBindingConstants.CONFIG_HTTP_POLLING_INTERVAL))
+                .flatMap(pollingIntervalObj -> atoi(pollingIntervalObj.toString())).orElse(10);
+
+        logger.debug("{}: validating configuration: url = {}, activeRooms = {}, httpPollingInterval = {}", this, url, activeRooms, httpPollingInterval);
+        if(activeRooms.isEmpty()) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "active rooms is empty");
+            return;
         }
-        // Example for background initialization:
-        // scheduler.execute(() -> {
-        // boolean thingReachable = true; // <background task with long running initialization here>
-        // // when done do:
-        // if (thingReachable) {
-        // updateStatus(ThingStatus.ONLINE);
-        // } else {
-        // updateStatus(ThingStatus.OFFLINE);
-        // }
-        // });
+        for(Integer roomNr: activeRooms) {
+            if(roomNr < 1 || roomNr > 8) {
+            	updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "invalid room numbers");
+            	return;
+            }
+        }
+        if(httpPollingInterval < 5) {
+            logger.warn("{}: httpPollingInterval is too low - setting to 5 seconds: {}", httpPollingInterval);
+            httpPollingInterval = 5;
+        }
 
-        // logger.debug("Finished initializing!");
-
-        // Note: When initialization can NOT be done set the status with more details for further
-        // analysis. See also class ThingStatusDetail for all available status details.
-        // Add a description to give user information to understand why thing does not work as expected. E.g.
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-        // "Can not access device as username and/or password are invalid");
+        logger.debug("{}: configuration looks good - starting client...", this);
+        zoneBoxClient = Optional.of(new ThresholdZoneBoxClient(new ZoneBoxHttpClient(httpClient, url), 1000));
+        pollingTickFuture = Optional.of(scheduler.scheduleAtFixedRate(new PollingTick(activeRooms), 1, httpPollingInterval, TimeUnit.SECONDS));
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (CHANNEL_1.equals(channelUID.getId())) {
-            if (command instanceof RefreshType) {
-                // TODO: handle data refresh
+        logger.debug("{}.handleCommand: groupId = {}, bindingId = {}, channel: {} -> {}",
+                this, channelUID.getGroupId(), channelUID.getBindingId(), channelUID.getIdWithoutGroup(), command);
+
+        RoomStatus roomStatus = new RoomStatus();
+
+        if(roomStatus.updateFromCommand(channelUID, command)) {
+            if(zoneBoxClientTransaction(zoneBoxClient -> roomStatus.apply2client(zoneBoxClient), "apply command: ", command)) {
+                roomStatus.apply2handler(thing.getUID(), (channelID, state) -> updateState(channelID, state));
+            } else {
+                logger.debug("unable to apply command - transaction didn't pass");
             }
-
-            // TODO: handle command
-
-            // Note: if communication with thing fails for some reason,
-            // indicate that by setting the status with detail information:
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-            // "Could not control device at IP address x.x.x.x");
+        } else {
+            logger.debug("ignoring unknown command: {} -> {}", channelUID, command);
         }
+    }
+
+
+    @Override
+    public void handleRemoval() {
+        logger.debug("{} - handling removal...", this);
+        pollingTickFuture.ifPresent(pollingTick -> {
+            if(!pollingTick.isDone()) {
+                pollingTick.cancel(false);
+            }
+        });
+        pollingTickFuture = Optional.empty();
+        super.handleRemoval();
+    }
+
+    @Override
+    public void dispose() {
+        logger.debug("{} - disposing...", this);
+        pollingTickFuture.ifPresent(pollingTick -> {
+            if(!pollingTick.isDone()) {
+                pollingTick.cancel(false);
+            }
+        });
+        pollingTickFuture = Optional.empty();
+        super.dispose();
     }
 }

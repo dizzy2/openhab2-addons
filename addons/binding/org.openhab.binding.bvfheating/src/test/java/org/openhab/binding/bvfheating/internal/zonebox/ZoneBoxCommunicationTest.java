@@ -42,7 +42,7 @@ public class ZoneBoxCommunicationTest {
         httpClient = new HttpClient();
         httpClient.start();
 
-        zoneBoxClient = new ThresholdZoneBoxClient(new ZoneBoxHttpClient(httpClient, hostUrl), 2000);
+        zoneBoxClient = new ThresholdZoneBoxClient(new ZoneBoxHttpClient(httpClient, hostUrl), 1000);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class ZoneBoxCommunicationTest {
 
     @Test
     public void testSettingSetpointTemp() throws Exception {
-        final DecimalType newSetpointTemp = new DecimalType("25.5");
+        final DecimalType newSetpointTemp = new DecimalType("25");
         final CollectingResponseHandler resultHandler = new CollectingResponseHandler();
 
         assumeNotNull("missing initial parameters from switchRoomNr test", initialParameters);
